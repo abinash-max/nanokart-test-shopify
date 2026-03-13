@@ -32,3 +32,11 @@ model Session {
   refreshToken        String?
   refreshTokenExpires DateTime?
 }
+
+model MerchantConfig {
+  id        String   @id @default(cuid())
+  shop      String
+  apiKey    String
+  partnerId String
+  createdAt DateTime @default(now())
+}

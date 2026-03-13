@@ -1,0 +1,92 @@
+<button
+  class="nanokart-tryon-btn"
+  data-nanokart-endpoint="{{ block.settings.endpoint }}"
+  data-person-image-url="{{ block.settings.person_image_url }}"
+  data-size-product-id="{{ block.settings.size_product_id }}"
+  data-default-size-chart='{{ block.settings.default_size_chart_cm | escape }}'
+  data-product-size-chart='{{ product.metafields.custom.size_chart_cm.value | json | escape }}'
+  data-shopify-product-id="{{ product.id }}"
+  {% if product.featured_image %}
+    data-garment-image-url="{{ product.featured_image | image_url }}"
+  {% endif %}
+>
+  TryOn Studio
+</button>
+
+<div id="nanokart-tryon-modal" class="nanokart-modal">
+  <div class="nanokart-modal-content">
+
+    <span class="nanokart-close">&times;</span>
+
+    <h2>Virtual Try-On</h2>
+
+    <p>Upload your photo to try this outfit</p>
+
+    <input type="file" id="nanokart-upload" accept="image/*" />
+
+    <div class="nanokart-preview-container">
+      <img id="nanokart-preview" width="512" height="512" />
+    </div>
+
+    <button class="nanokart-generate-btn">
+      Generate Try On
+    </button>
+
+    <div class="nanokart-moments-container" style="display: none;">
+      <p>Create a moment scene</p>
+      <div class="nanokart-moments-grid">
+        <button type="button" class="nanokart-moment-btn" data-moment-type="creative_workday">Creative Workday</button>
+        <button type="button" class="nanokart-moment-btn" data-moment-type="escape">Escape</button>
+        <button type="button" class="nanokart-moment-btn" data-moment-type="unwind">Unwind</button>
+        <button type="button" class="nanokart-moment-btn" data-moment-type="after_hours">After Hours</button>
+        <button type="button" class="nanokart-moment-btn" data-moment-type="gentle_celebration">Gentle Celebration</button>
+      </div>
+    </div>
+
+    <div class="nanokart-size-container" style="display: none;">
+      <p>Get size recommendation</p>
+      <input type="number" id="nanokart-height-cm" placeholder="Height in cm (e.g. 165)" min="50" max="250" />
+      <input type="text" id="nanokart-product-id" placeholder="Nanokart Product ID (optional if using size chart JSON)" />
+      <textarea id="nanokart-size-chart-json" placeholder='Optional size_chart_cm JSON, e.g. {"M":{"chest_cm":92}}'></textarea>
+      <button type="button" class="nanokart-size-btn">Recommend Size</button>
+      <div class="nanokart-size-result" style="display: none;"></div>
+    </div>
+
+  </div>
+</div>
+
+<script src="{{ 'tryon.js' | asset_url }}" defer></script>
+<link href="{{ 'tryon.css' | asset_url }}" rel="stylesheet">
+
+{% schema %}
+{
+  "name": "TryOn Studio",
+  "target": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "endpoint",
+      "label": "TryOn API endpoint (App Proxy path)",
+      "default": "/apps/nanokart-tryon/api/tryon"
+    },
+    {
+      "type": "text",
+      "id": "person_image_url",
+      "label": "Person image URL (optional for testing)",
+      "default": "https://www.wholesaletextile.in/product-img/Tips-Tops-Insta-Girl-Western-T-1657705091.jpeg"
+    },
+    {
+      "type": "text",
+      "id": "size_product_id",
+      "label": "Default Size Product ID (optional)",
+      "default": "prod_xyz789"
+    },
+    {
+      "type": "textarea",
+      "id": "default_size_chart_cm",
+      "label": "Default size_chart_cm JSON (optional)",
+      "default": "{}"
+    }
+  ]
+}
+{% endschema %}
