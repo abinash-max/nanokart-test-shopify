@@ -6,57 +6,224 @@
   data-default-size-chart='{{ block.settings.default_size_chart_cm | escape }}'
   data-product-size-chart='{{ product.metafields.custom.size_chart_cm.value | json | escape }}'
   data-shopify-product-id="{{ product.id }}"
+  data-shopify-variant-id="{{ product.selected_or_first_available_variant.id }}"
+  data-customer-id="{% if customer %}{{ customer.id }}{% endif %}"
   {% if product.featured_image %}
     data-garment-image-url="{{ product.featured_image | image_url }}"
   {% endif %}
 >
-  TryOn Studio
+  Open TryOn Studio
 </button>
 
 <div id="nanokart-tryon-modal" class="nanokart-modal">
   <div class="nanokart-modal-content">
-
-    <span class="nanokart-close">&times;</span>
-
-    <h2>Virtual Try-On</h2>
-
-    <p>Upload your photo to try this outfit</p>
-
-    <input type="file" id="nanokart-upload" accept="image/*" />
-
-    <div class="nanokart-preview-container">
-      <img id="nanokart-preview" width="512" height="512" />
-    </div>
-
-    <button class="nanokart-generate-btn">
-      Generate Try On
-    </button>
-
-    <div class="nanokart-moments-container" style="display: none;">
-      <p>Create a moment scene</p>
-      <div class="nanokart-moments-grid">
-        <button type="button" class="nanokart-moment-btn" data-moment-type="creative_workday">Creative Workday</button>
-        <button type="button" class="nanokart-moment-btn" data-moment-type="escape">Escape</button>
-        <button type="button" class="nanokart-moment-btn" data-moment-type="unwind">Unwind</button>
-        <button type="button" class="nanokart-moment-btn" data-moment-type="after_hours">After Hours</button>
-        <button type="button" class="nanokart-moment-btn" data-moment-type="gentle_celebration">Gentle Celebration</button>
+    <div class="nanokart-modal-header">
+      <div class="nanokart-heading-wrap">
+        <p class="nanokart-eyebrow">Tryon Studio <sup>TM</sup></p>
+        <h2>Try this outfit instantly</h2>
+      </div>
+      <div class="nanokart-top-right">
+        <button type="button" class="nanokart-close" aria-label="Close TryOn Studio">&times;</button>
       </div>
     </div>
 
-    <div class="nanokart-size-container" style="display: none;">
-      <p>Get size recommendation</p>
-      <input type="number" id="nanokart-height-cm" placeholder="Height in cm (e.g. 165)" min="50" max="250" />
-      <input type="text" id="nanokart-product-id" placeholder="Nanokart Product ID (optional if using size chart JSON)" />
-      <textarea id="nanokart-size-chart-json" placeholder='Optional size_chart_cm JSON, e.g. {"M":{"chest_cm":92}}'></textarea>
-      <button type="button" class="nanokart-size-btn">Recommend Size</button>
-      <div class="nanokart-size-result" style="display: none;"></div>
+    <input type="file" id="nanokart-upload" accept="image/*" hidden>
+    <p id="nanokart-upload-name" class="nanokart-upload-name" style="display:none;"></p>
+
+    <section class="nanokart-flow-section">
+      <div class="nanokart-ref-grid">
+        {% if block.settings.tryon_studio_image != blank %}
+          <img class="nanokart-ref-image" src="{{ block.settings.tryon_studio_image | image_url: width: 900 }}" alt="TryOn Studio reference" loading="lazy" />
+        {% endif %}
+        {% if block.settings.moments_image != blank %}
+          <img class="nanokart-ref-image" src="{{ block.settings.moments_image | image_url: width: 900 }}" alt="Moments reference" loading="lazy" />
+        {% endif %}
+      </div>
+
+      <div class="nanokart-stage-grid">
+        <div class="nanokart-main-stage-card">
+          <div id="nanokart-main-stage" class="nanokart-main-stage">
+            <div id="nanokart-stage-top-actions" class="nanokart-stage-top-actions" style="display:none;">
+              <span id="nanokart-stage-moment-tag" class="nanokart-stage-moment-tag"></span>
+              <button type="button" id="nanokart-back-to-tryon-btn" class="nanokart-back-to-tryon-btn">Back to Try-on</button>
+            </div>
+            <button type="button" id="nanokart-stage-clear-btn" class="nanokart-stage-clear-btn" aria-label="Clear current photo" style="display:none;">&times;</button>
+            <div id="nanokart-stage-loader" class="nanokart-stage-loader" style="display:none;">
+              <div class="nanokart-loader-spinner"></div>
+            </div>
+            <img id="nanokart-preview" width="512" height="512" />
+            <div id="nanokart-stage-placeholder" class="nanokart-stage-placeholder">
+              <div class="nanokart-stage-placeholder-icon">○</div>
+              <p>Add your photo to start</p>
+              <span>Take a selfie or upload from gallery</span>
+              <div class="nanokart-stage-actions">
+                <button type="button" id="nanokart-stage-camera-btn" class="nanokart-stage-action-btn nanokart-stage-action-btn-primary">
+                  <span class="nanokart-stage-action-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                      <path d="M9 4.5H15L16.2 6H19.5C20.33 6 21 6.67 21 7.5V18C21 18.83 20.33 19.5 19.5 19.5H4.5C3.67 19.5 3 18.83 3 18V7.5C3 6.67 3.67 6 4.5 6H7.8L9 4.5Z" />
+                      <circle cx="12" cy="13" r="3.5" />
+                    </svg>
+                  </span>
+                  <span>Camera</span>
+                </button>
+                <button type="button" id="nanokart-stage-upload-btn" class="nanokart-stage-action-btn nanokart-stage-action-btn-secondary">
+                  <span class="nanokart-stage-action-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                      <rect x="3.5" y="4.5" width="17" height="15" rx="2.2" />
+                      <circle cx="9" cy="10" r="1.4" />
+                      <path d="M5.8 16.5L10.8 11.7L14 14.8L16.8 12.2L20.5 16.5" />
+                    </svg>
+                  </span>
+                  <span>Upload</span>
+                </button>
+              </div>
+            </div>
+            <div id="nanokart-stage-generate-wrap" class="nanokart-stage-generate-wrap" style="display:none;">
+              <button type="button" class="nanokart-generate-btn nanokart-stage-generate-btn">Try it on Me</button>
+            </div>
+            <div id="nanokart-stage-moments-wrap" class="nanokart-stage-moments-wrap" style="display:none;">
+              <button type="button" id="nanokart-moments-toggle" class="nanokart-moments-toggle">Moments</button>
+              <div id="nanokart-moments-menu" class="nanokart-moments-menu" style="display:none;">
+                <button type="button" class="nanokart-stage-moment-btn" data-moment-type="creative_workday">💼 Workday</button>
+                <button type="button" class="nanokart-stage-moment-btn" data-moment-type="unwind">🛋️ Unwind</button>
+                <button type="button" class="nanokart-stage-moment-btn" data-moment-type="after_hours">🌙 After Hours</button>
+                <button type="button" class="nanokart-stage-moment-btn" data-moment-type="escape">🌴 The Escape</button>
+                <button type="button" class="nanokart-stage-moment-btn" data-moment-type="gentle_celebration">🎉 Celebrate</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="nanokart-history-container" style="display: none;">
+        <p>Recent outputs</p>
+        <div class="nanokart-history-strip"></div>
+      </div>
+
+    </section>
+
+    <section class="nanokart-flow-section">
+      <div class="nanokart-ref-grid">
+        {% if block.settings.size_recommendation_image != blank %}
+          <img class="nanokart-ref-image" src="{{ block.settings.size_recommendation_image | image_url: width: 900 }}" alt="Smart Size Recommendation reference" loading="lazy" />
+        {% endif %}
+      </div>
+
+      <div class="nanokart-size-container" style="display: none;">
+        <input type="hidden" id="nanokart-product-id" />
+        <input type="hidden" id="nanokart-size-chart-json" />
+
+        <div id="nanokart-size-panel" class="nk-sz-panel" data-testid="size-recommend-panel">
+          <button type="button" id="nk-sz-toggle" class="nk-sz-toggle" data-testid="size-recommend-toggle" aria-expanded="false">
+            <span class="nk-sz-toggle-left">
+              <span class="nk-sz-icon-tile" aria-hidden="true">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>
+                </svg>
+              </span>
+              <span class="nk-sz-title-wrap">
+                <span class="nk-sz-title">Find Your Perfect Size</span>
+                <span id="nk-sz-subtitle" class="nk-sz-subtitle">AI-powered fit recommendation</span>
+              </span>
+            </span>
+
+            <span class="nk-sz-toggle-right">
+              <span id="nk-sz-pill" class="nk-sz-pill" hidden></span>
+              <span class="nk-sz-chevron" aria-hidden="true">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </span>
+            </span>
+          </button>
+
+          <div id="nk-sz-body" class="nk-sz-body" hidden>
+            <div id="nk-sz-input" class="nk-sz-input">
+              <div class="nk-sz-heading">
+                <p class="nk-sz-heading-title">Enter your height to find your size</p>
+                <p class="nk-sz-heading-sub">AI uses your body measurements from the try-on</p>
+              </div>
+
+              <div class="nk-sz-unit">
+                <button type="button" class="nk-sz-unit-btn is-active" data-unit="cm" data-testid="size-unit-cm">cm</button>
+                <button type="button" class="nk-sz-unit-btn" data-unit="ft" data-testid="size-unit-ft">ft / in</button>
+              </div>
+
+              <div class="nk-sz-row">
+                <div id="nk-sz-cm-wrap" class="nk-sz-field">
+                  <input id="nk-sz-height-cm" data-testid="size-height-input" type="text" inputmode="decimal" placeholder="e.g. 165" />
+                  <span class="nk-sz-suffix">cm</span>
+                </div>
+
+                <div id="nk-sz-ft-wrap" class="nk-sz-ft-wrap" hidden>
+                  <div class="nk-sz-field">
+                    <input id="nk-sz-height-ft" data-testid="size-height-ft-input" type="text" inputmode="numeric" placeholder="5" />
+                    <span class="nk-sz-suffix">ft</span>
+                  </div>
+                  <div class="nk-sz-field">
+                    <input id="nk-sz-height-in" data-testid="size-inches-input" type="text" inputmode="numeric" placeholder="7" />
+                    <span class="nk-sz-suffix">in</span>
+                  </div>
+                </div>
+
+                <button type="button" id="nk-sz-submit" class="nk-sz-btn-primary" data-testid="size-recommend-submit" disabled>
+                  <span class="nk-sz-btn-text">Get Size</span>
+                  <span class="nk-sz-btn-icon" aria-hidden="true">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M5 12h14M12 5l7 7-7 7" />
+                    </svg>
+                  </span>
+                </button>
+              </div>
+
+              <div id="nk-sz-ft-hint" class="nk-sz-hint" hidden></div>
+              <div id="nk-sz-error" class="nk-sz-error" data-testid="size-recommend-error" hidden></div>
+            </div>
+
+            <div id="nk-sz-result" class="nk-sz-result" hidden></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="nanokart-cart-container nanokart-panel" style="display: none;">
+        <p>Add this product to your cart</p>
+        <button type="button" class="nanokart-add-cart-btn">Add to Cart</button>
+        <div class="nanokart-cart-result" style="display: none;"></div>
+      </div>
+      <p class="nanokart-powered-by">Powered by Nanokart.ai</p>
+    </section>
+
+    <details class="nanokart-pro-tips">
+      <summary>Pro tips for better results</summary>
+      <ul>
+        <li>Use a full-body, front-facing photo.</li>
+        <li>Good lighting improves fit accuracy.</li>
+        <li>Avoid group photos and cluttered backgrounds.</li>
+      </ul>
+    </details>
+
+    <div class="nanokart-privacy-note">
+      Your photo is used only for this try-on flow.
     </div>
 
   </div>
 </div>
 
+<div id="nanokart-fullscreen-gallery" class="nanokart-fullscreen-gallery" style="display: none;">
+  <span id="nanokart-gallery-tag" class="nanokart-gallery-tag"></span>
+  <button type="button" class="nanokart-gallery-close" aria-label="Close fullscreen">&times;</button>
+  <button type="button" class="nanokart-gallery-nav nanokart-gallery-prev" aria-label="Previous image">&#8249;</button>
+  <img id="nanokart-gallery-image" class="nanokart-gallery-image" alt="TryOn preview" />
+  <button type="button" class="nanokart-gallery-nav nanokart-gallery-next" aria-label="Next image">&#8250;</button>
+  <div class="nanokart-gallery-footer">
+    <p id="nanokart-gallery-caption" class="nanokart-gallery-caption"></p>
+    <div id="nanokart-gallery-thumbs" class="nanokart-gallery-thumbs"></div>
+  </div>
+</div>
+
 <script src="{{ 'tryon.js' | asset_url }}" defer></script>
 <link href="{{ 'tryon.css' | asset_url }}" rel="stylesheet">
+<input type="file" id="nanokart-camera-upload" accept="image/*" capture="environment" hidden>
 
 {% schema %}
 {
@@ -86,6 +253,26 @@
       "id": "default_size_chart_cm",
       "label": "Default size_chart_cm JSON (optional)",
       "default": "{}"
+    },
+    {
+      "type": "image_picker",
+      "id": "tryon_studio_image",
+      "label": "TryOn Studio reference image"
+    },
+    {
+      "type": "image_picker",
+      "id": "moments_image",
+      "label": "Moments reference image"
+    },
+    {
+      "type": "image_picker",
+      "id": "size_recommendation_image",
+      "label": "Smart Size Recommendation reference image"
+    },
+    {
+      "type": "image_picker",
+      "id": "top_right_logo",
+      "label": "Top-right logo"
     }
   ]
 }

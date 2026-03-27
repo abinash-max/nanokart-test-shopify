@@ -143,115 +143,250 @@ export default function InstallPage() {
   const missingThemeScope = Boolean(loaderData.missingThemeScope);
   const loaderError = loaderData.loaderError;
 
+  const pageWrapStyle = {
+    display: "grid",
+    gap: 14,
+    maxWidth: 980,
+    margin: "0 auto",
+  };
+
+  const cardStyle = {
+    borderRadius: 18,
+    border: "1px solid #dbeafe",
+    background:
+      "linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(248,250,252,1) 100%)",
+    boxShadow: "0 14px 34px rgba(30,64,175,0.08)",
+    padding: 16,
+  };
+
+  const primaryBtn = {
+    background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
+    color: "#fff",
+    border: "none",
+    borderRadius: 10,
+    padding: "9px 12px",
+    fontSize: 13,
+    fontWeight: 700,
+    textDecoration: "none",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer",
+  };
+
+  const secondaryBtn = {
+    background: "#eff6ff",
+    color: "#1d4ed8",
+    border: "1px solid #93c5fd",
+    borderRadius: 10,
+    padding: "9px 12px",
+    fontSize: 13,
+    fontWeight: 700,
+    cursor: "pointer",
+  };
+
   return (
-    <s-page heading="Install Try-On Button">
-      <s-section>
-        <s-box
-          padding="large"
-          borderWidth="base"
-          borderRadius="large"
-          background="subdued"
-        >
-          <s-stack direction="block" gap="base">
-            <s-text>
-              Choose a theme and open the Theme Editor directly. In the editor,
-              go to Apps and add the Nanokart Try On block to your product
-              template.
-            </s-text>
-            <s-text>
-              Tip: Keep your extension endpoint set to your app URL while in dev.
-            </s-text>
-            <s-unordered-list>
-              <s-list-item>Open Theme Editor for the theme you want.</s-list-item>
-              <s-list-item>Go to a Product template.</s-list-item>
-              <s-list-item>Add block from Apps → Nanokart Try On.</s-list-item>
-              <s-list-item>Save theme changes.</s-list-item>
-              <s-list-item>Click Verify Installation here.</s-list-item>
-            </s-unordered-list>
-          </s-stack>
-        </s-box>
-      </s-section>
-
-      {missingThemeScope && (
-        <s-section>
-          <s-box
-            padding="base"
-            borderWidth="base"
-            borderRadius="base"
-            background="subdued"
+    <s-page>
+      <div style={pageWrapStyle}>
+        <div style={cardStyle}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 12,
+              flexWrap: "wrap",
+              marginBottom: 12,
+            }}
           >
-            <s-stack direction="block" gap="base">
-              <s-text>
-                Theme access scope is missing. Add <code>read_themes</code> to
-                your app scopes and re-authorize the app in your dev store.
-              </s-text>
-              {loaderError && <s-text>{loaderError}</s-text>}
-            </s-stack>
-          </s-box>
-        </s-section>
-      )}
-
-      {actionData?.message && (
-        <s-section>
-          <s-box
-            padding="base"
-            borderWidth="base"
-            borderRadius="base"
-            background="subdued"
-          >
-            <s-stack direction="block" gap="base">
-              <s-text>{actionData.message}</s-text>
-              {actionData.details && <s-text>{actionData.details}</s-text>}
-            </s-stack>
-          </s-box>
-        </s-section>
-      )}
-
-      <s-section heading="Your themes">
-        <s-stack direction="block" gap="base">
-          {currentThemes.length === 0 ? (
-            <s-box
-              padding="base"
-              borderWidth="base"
-              borderRadius="base"
-              background="subdued"
+            <img
+              src="/api/logo"
+              alt="Nanokart logo"
+              style={{ width: 210, maxWidth: "100%", height: "auto" }}
+            />
+            <span
+              style={{
+                borderRadius: 999,
+                background: "#dbeafe",
+                color: "#1d4ed8",
+                padding: "6px 10px",
+                fontSize: 12,
+                fontWeight: 700,
+              }}
             >
-              <s-text>No themes found for this store.</s-text>
-            </s-box>
-          ) : (
-            currentThemes.map((theme) => {
-              const editorUrl = `https://${currentShop}/admin/themes/${theme.themeId}/editor?context=apps`;
-              return (
-                <s-box
-                  key={theme.id}
-                  padding="base"
-                  borderWidth="base"
-                  borderRadius="base"
-                  background="subdued"
-                >
-                  <s-stack direction="block" gap="base">
-                    <s-text>
-                      {theme.name} ({theme.role})
-                    </s-text>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <s-button href={editorUrl} target="_blank">
+              Theme Setup
+            </span>
+          </div>
+
+          <h2 style={{ margin: "0 0 8px 0", fontSize: 26, color: "#0f172a" }}>
+            Install Try-On Button
+          </h2>
+          <p style={{ margin: 0, color: "#475569", lineHeight: 1.55 }}>
+            Choose your theme and add the Nanokart Try-On block in the product
+            template. Then come back and verify installation.
+          </p>
+
+          <div
+            style={{
+              marginTop: 12,
+              background: "#eff6ff",
+              border: "1px solid #bfdbfe",
+              borderRadius: 12,
+              padding: 12,
+              color: "#1e3a8a",
+              fontSize: 13,
+              lineHeight: 1.55,
+            }}
+          >
+            <strong>Tip:</strong> Keep your extension endpoint pointing to your
+            current app URL while in development.
+          </div>
+
+          <ol
+            style={{
+              margin: "12px 0 0 18px",
+              padding: 0,
+              color: "#334155",
+              lineHeight: 1.7,
+            }}
+          >
+            <li>Open Theme Editor for the theme you want.</li>
+            <li>Go to Product template.</li>
+            <li>Add block from Apps -> Nanokart Try On.</li>
+            <li>Save theme changes.</li>
+            <li>Click Verify Installation here.</li>
+          </ol>
+        </div>
+
+        {missingThemeScope && (
+          <div
+            style={{
+              ...cardStyle,
+              borderColor: "#fecaca",
+              background:
+                "linear-gradient(180deg, rgba(254,242,242,1) 0%, rgba(255,255,255,1) 100%)",
+            }}
+          >
+            <p style={{ margin: 0, color: "#991b1b", lineHeight: 1.55 }}>
+              Theme access scope is missing. Add <code>read_themes</code> to your
+              app scopes and re-authorize the app in your dev store.
+            </p>
+            {loaderError && (
+              <p style={{ margin: "8px 0 0 0", color: "#7f1d1d", fontSize: 13 }}>
+                {loaderError}
+              </p>
+            )}
+          </div>
+        )}
+
+        {actionData?.message && (
+          <div
+            style={{
+              ...cardStyle,
+              borderColor: actionData?.ok ? "#bbf7d0" : "#fde68a",
+              background: actionData?.ok
+                ? "linear-gradient(180deg, #f0fdf4 0%, rgba(255,255,255,1) 100%)"
+                : "linear-gradient(180deg, #fffbeb 0%, rgba(255,255,255,1) 100%)",
+            }}
+          >
+            <p
+              style={{
+                margin: 0,
+                color: actionData?.ok ? "#166534" : "#92400e",
+                lineHeight: 1.55,
+              }}
+            >
+              {actionData.message}
+            </p>
+            {actionData.details && (
+              <p style={{ margin: "8px 0 0 0", color: "#57534e", fontSize: 13 }}>
+                {actionData.details}
+              </p>
+            )}
+          </div>
+        )}
+
+        <div style={cardStyle}>
+          <h3
+            style={{
+              margin: "0 0 12px 0",
+              color: "#0f172a",
+              fontSize: 20,
+            }}
+          >
+            Your Themes
+          </h3>
+          <div style={{ display: "grid", gap: 10 }}>
+            {currentThemes.length === 0 ? (
+              <div
+                style={{
+                  border: "1px solid #e2e8f0",
+                  borderRadius: 12,
+                  padding: 12,
+                  background: "#f8fafc",
+                  color: "#475569",
+                }}
+              >
+                No themes found for this store.
+              </div>
+            ) : (
+              currentThemes.map((theme) => {
+                const editorUrl = `https://${currentShop}/admin/themes/${theme.themeId}/editor?context=apps`;
+                return (
+                  <div
+                    key={theme.id}
+                    style={{
+                      border: "1px solid #e2e8f0",
+                      borderRadius: 12,
+                      padding: 12,
+                      background: "#f8fafc",
+                      display: "grid",
+                      gap: 10,
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: 10,
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      <strong style={{ color: "#0f172a" }}>{theme.name}</strong>
+                      <span
+                        style={{
+                          borderRadius: 999,
+                          background: theme.role === "MAIN" ? "#dcfce7" : "#e2e8f0",
+                          color: theme.role === "MAIN" ? "#166534" : "#334155",
+                          padding: "4px 8px",
+                          fontSize: 11,
+                          fontWeight: 700,
+                          letterSpacing: "0.03em",
+                        }}
+                      >
+                        {theme.role}
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      <a href={editorUrl} target="_blank" rel="noreferrer" style={primaryBtn}>
                         Open Theme Editor
-                      </s-button>
+                      </a>
                       <Form method="post">
                         <input type="hidden" name="themeId" value={theme.themeId} />
                         <input type="hidden" name="themeName" value={theme.name} />
-                        <s-button type="submit" disabled={isSubmitting}>
-                          Verify Installation
-                        </s-button>
+                        <button type="submit" disabled={isSubmitting} style={secondaryBtn}>
+                          {isSubmitting ? "Verifying..." : "Verify Installation"}
+                        </button>
                       </Form>
                     </div>
-                  </s-stack>
-                </s-box>
-              );
-            })
-          )}
-        </s-stack>
-      </s-section>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      </div>
     </s-page>
   );
 }

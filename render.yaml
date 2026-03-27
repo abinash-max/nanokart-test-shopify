@@ -1,0 +1,23 @@
+# Render blueprint: https://render.com/docs/infrastructure-as-code
+# After first deploy, copy the service URL into shopify.app.toml → application_url
+# and set SHOPIFY_APP_URL to the same value, then run: npm run deploy
+
+services:
+  - type: web
+    name: nanokart-test
+    runtime: docker
+    region: oregon
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SHOPIFY_APP_URL
+        sync: false
+      - key: SHOPIFY_API_KEY
+        sync: false
+      - key: SHOPIFY_API_SECRET
+        sync: false
+      - key: SCOPES
+        sync: false
