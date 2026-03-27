@@ -2,7 +2,7 @@
 
 client_id = "d380c905b169139ccf4124f09cafe93b"
 name = "nanokart-test"
-application_url = "https://example.com"
+application_url = "https://nanokart-test.onrender.com"
 embedded = true
 
 [build]
@@ -16,4 +16,4 @@ api_version = "2026-04"
 scopes = "read_themes,write_metaobject_definitions,write_metaobjects,write_products"
 
 [auth]
-redirect_urls = [ "https://example.com/api/auth" ]
+redirect_urls = [ "https://nanokart-test.onrender.com/auth/callback" ]
