@@ -1,7 +1,7 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "43181501838a1fe6f518456ae007c529"
-name = "nanokart-test"
+name = "nanokart"
 application_url = "https://nanokart-test.onrender.com"
 embedded = true
 

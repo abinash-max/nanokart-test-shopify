@@ -1,5 +1,5 @@
 {
-  "name": "nanokart-test",
+  "name": "nanokart",
   "private": true,
   "scripts": {
     "build": "react-router build",
