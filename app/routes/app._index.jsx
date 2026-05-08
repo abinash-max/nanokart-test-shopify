@@ -1,13 +1,29 @@
 import { useEffect, useState } from "react";
 import { Form, useActionData, useLoaderData, useNavigation } from "react-router";
-import { Link } from "react-router";
+import { Link, redirect } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
-import { authenticate } from "../shopify.server";
+import { authenticate, PLANS } from "../shopify.server";
 import prisma from "../db.server";
 
 export const loader = async ({ request }) => {
-  const { session } = await authenticate.admin(request);
+  const { session, billing } = await authenticate.admin(request);
   const shop = session?.shop;
+
+  const { hasActivePayment } = await billing.check({
+    plans: [
+      PLANS.STARTER_MONTHLY,
+      PLANS.GROWTH_MONTHLY,
+      PLANS.PRO_MONTHLY,
+      PLANS.STARTER_ANNUAL,
+      PLANS.GROWTH_ANNUAL,
+      PLANS.PRO_ANNUAL,
+    ],
+    isTest: true,
+  });
+
+  if (!hasActivePayment) {
+    return redirect("/app/billing");
+  }
 
   const existingConfig = shop
     ? await prisma.merchantConfig.findFirst({
