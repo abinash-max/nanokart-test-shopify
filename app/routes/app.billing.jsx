@@ -51,7 +51,8 @@ export const action = async ({ request }) => {
         prorate: true,
       });
     }
-    return redirect("/app/billing");
+    const url = new URL(request.url);
+    return redirect(`/app/billing${url.search}`);
   }
 
   return null;
