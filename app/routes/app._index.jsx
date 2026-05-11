@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { Form, useActionData, useLoaderData, useNavigation } from "react-router";
 import { Link, redirect } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
-import { authenticate, PLANS } from "../shopify.server";
+import { authenticate } from "../shopify.server";
+import { ALL_PLAN_KEYS } from "../lib/plans";
 import prisma from "../db.server";
 
 export const loader = async ({ request }) => {
@@ -10,14 +11,7 @@ export const loader = async ({ request }) => {
   const shop = session?.shop;
 
   const { hasActivePayment } = await billing.check({
-    plans: [
-      PLANS.STARTER_MONTHLY,
-      PLANS.GROWTH_MONTHLY,
-      PLANS.PRO_MONTHLY,
-      PLANS.STARTER_ANNUAL,
-      PLANS.GROWTH_ANNUAL,
-      PLANS.PRO_ANNUAL,
-    ],
+    plans: ALL_PLAN_KEYS,
     isTest: true,
   });
 

@@ -2,16 +2,8 @@ import { useState } from "react";
 import { redirect } from "react-router";
 import { useLoaderData } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
-import { authenticate, PLANS } from "../shopify.server";
-
-const ALL_PLANS = [
-  PLANS.STARTER_MONTHLY,
-  PLANS.GROWTH_MONTHLY,
-  PLANS.PRO_MONTHLY,
-  PLANS.STARTER_ANNUAL,
-  PLANS.GROWTH_ANNUAL,
-  PLANS.PRO_ANNUAL,
-];
+import { authenticate } from "../shopify.server";
+import { PLANS, ALL_PLAN_KEYS as ALL_PLANS } from "../lib/plans";
 
 export const loader = async ({ request }) => {
   const { billing, session } = await authenticate.admin(request);

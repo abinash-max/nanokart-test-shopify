@@ -7,15 +7,9 @@ import {
 } from "@shopify/shopify-app-react-router/server";
 import { PrismaSessionStorage } from "@shopify/shopify-app-session-storage-prisma";
 import prisma from "./db.server";
+import { PLANS } from "./lib/plans";
 
-export const PLANS = {
-  STARTER_MONTHLY: "Nanokart Starter – Monthly",
-  GROWTH_MONTHLY: "Nanokart Growth – Monthly",
-  PRO_MONTHLY: "Nanokart Professional – Monthly",
-  STARTER_ANNUAL: "Nanokart Starter – Annual",
-  GROWTH_ANNUAL: "Nanokart Growth – Annual",
-  PRO_ANNUAL: "Nanokart Professional – Annual",
-};
+export { PLANS };
 
 const shopify = shopifyApp({
   apiKey: process.env.SHOPIFY_API_KEY,
