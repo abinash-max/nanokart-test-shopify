@@ -16,7 +16,7 @@ export const loader = async ({ request }) => {
   });
 
   if (!hasActivePayment) {
-    return redirect("/app/billing");
+    throw redirect("/app/billing");
   }
 
   const existingConfig = shop
