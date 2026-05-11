@@ -1,68 +1,30 @@
 import { useState } from "react";
-import { Form, redirect, useLoaderData } from "react-router";
+import { useLoaderData } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
-import { authenticate } from "../shopify.server";
-import { PLANS, ALL_PLAN_KEYS as ALL_PLANS } from "../lib/plans";
+import { authenticate, APP_HANDLE } from "../shopify.server";
 
 export const loader = async ({ request }) => {
   const { billing, session } = await authenticate.admin(request);
 
-  const billingCheck = await billing.check({
-    plans: ALL_PLANS,
-    isTest: true,
-  });
-
+  // For Managed Pricing apps, billing.check() with no plans returns the
+  // current subscription status without requiring plan name matching.
+  const billingCheck = await billing.check({});
   const activeSub = billingCheck.appSubscriptions?.[0] ?? null;
+
+  const shopHandle = session.shop.replace(".myshopify.com", "");
+  const managedPricingUrl = `https://admin.shopify.com/store/${shopHandle}/charges/${APP_HANDLE}/pricing_plans`;
 
   return {
     shop: session.shop,
     hasActiveSubscription: billingCheck.hasActivePayment,
     activePlan: activeSub?.name ?? null,
+    managedPricingUrl,
   };
-};
-
-export const action = async ({ request }) => {
-  const { billing } = await authenticate.admin(request);
-  const formData = await request.formData();
-  const intent = formData.get("intent");
-  const plan = formData.get("plan");
-
-  if (intent === "subscribe") {
-    if (ALL_PLANS.includes(plan)) {
-      // billing.request returns a redirect Response to Shopify's hosted
-      // confirmation page — we must return it so the browser follows it.
-      return await billing.request({
-        plan,
-        isTest: true,
-        returnUrl: `${process.env.SHOPIFY_APP_URL}/app`,
-      });
-    }
-  }
-
-  if (intent === "cancel") {
-    const billingCheck = await billing.check({
-      plans: ALL_PLANS,
-      isTest: true,
-    });
-    const activeSub = billingCheck.appSubscriptions?.[0];
-    if (activeSub) {
-      await billing.cancel({
-        subscriptionId: activeSub.id,
-        isTest: true,
-        prorate: true,
-      });
-    }
-    const url = new URL(request.url);
-    return redirect(`/app/billing${url.search}`);
-  }
-
-  return null;
 };
 
 const PLAN_DATA = {
   monthly: [
     {
-      id: PLANS.STARTER_MONTHLY,
       tier: "Starter",
       price: "₹999",
       period: "/mo",
@@ -81,7 +43,6 @@ const PLAN_DATA = {
       parentFeatures: null,
     },
     {
-      id: PLANS.GROWTH_MONTHLY,
       tier: "Growth",
       price: "₹2,999",
       period: "/mo",
@@ -102,7 +63,6 @@ const PLAN_DATA = {
       ],
     },
     {
-      id: PLANS.PRO_MONTHLY,
       tier: "Professional",
       price: "₹7,999",
       period: "/mo",
@@ -125,7 +85,6 @@ const PLAN_DATA = {
   ],
   annual: [
     {
-      id: PLANS.STARTER_ANNUAL,
       tier: "Starter",
       price: "₹833",
       originalPrice: "₹999",
@@ -145,7 +104,6 @@ const PLAN_DATA = {
       ],
     },
     {
-      id: PLANS.GROWTH_ANNUAL,
       tier: "Growth",
       price: "₹2,499",
       originalPrice: "₹2,999",
@@ -167,7 +125,6 @@ const PLAN_DATA = {
       ],
     },
     {
-      id: PLANS.PRO_ANNUAL,
       tier: "Professional",
       price: "₹6,666",
       originalPrice: "₹7,999",
@@ -192,10 +149,19 @@ const PLAN_DATA = {
 };
 
 export default function BillingPage() {
-  const { hasActiveSubscription, activePlan } = useLoaderData();
+  const { hasActiveSubscription, activePlan, managedPricingUrl } =
+    useLoaderData();
   const [isAnnual, setIsAnnual] = useState(false);
 
   const plans = isAnnual ? PLAN_DATA.annual : PLAN_DATA.monthly;
+
+  const goToShopifyPricing = () => {
+    // Break out of the embedded iframe and load Shopify's hosted pricing page
+    // at the top level. This is the correct flow for Managed Pricing apps.
+    if (typeof window !== "undefined") {
+      window.open(managedPricingUrl, "_top");
+    }
+  };
 
   const baseCard = {
     borderRadius: 16,
@@ -227,7 +193,6 @@ export default function BillingPage() {
         }}
       >
         <div style={{ maxWidth: 960, margin: "0 auto" }}>
-
           {/* Active subscription banner */}
           {hasActiveSubscription && (
             <div
@@ -261,24 +226,22 @@ export default function BillingPage() {
                   <strong>Current plan:</strong> {activePlan}
                 </span>
               </div>
-              <Form method="post">
-                <input type="hidden" name="intent" value="cancel" />
-                <button
-                  type="submit"
-                  style={{
-                    background: "transparent",
-                    color: "#dc2626",
-                    border: "1px solid #fca5a5",
-                    borderRadius: 8,
-                    fontWeight: 600,
-                    padding: "6px 16px",
-                    cursor: "pointer",
-                    fontSize: 13,
-                  }}
-                >
-                  Cancel subscription
-                </button>
-              </Form>
+              <button
+                type="button"
+                onClick={goToShopifyPricing}
+                style={{
+                  background: "transparent",
+                  color: "#0f172a",
+                  border: "1px solid #cbd5e1",
+                  borderRadius: 8,
+                  fontWeight: 600,
+                  padding: "6px 16px",
+                  cursor: "pointer",
+                  fontSize: 13,
+                }}
+              >
+                Manage subscription
+              </button>
             </div>
           )}
 
@@ -364,7 +327,6 @@ export default function BillingPage() {
           >
             {plans.map((plan) => {
               const isPopular = plan.popular;
-              const isActive = activePlan === plan.id;
               const card = isPopular ? popularCard : baseCard;
               const lt = isPopular ? popularLightText : lightText;
               const headingColor = isPopular ? "#60a5fa" : "#0f172a";
@@ -373,8 +335,7 @@ export default function BillingPage() {
               const featureColor = isPopular ? "#e2e8f0" : "#334155";
 
               return (
-                <div key={plan.id} style={card}>
-                  {/* Most Popular badge */}
+                <div key={plan.tier} style={card}>
                   {isPopular && (
                     <div
                       style={{
@@ -395,7 +356,6 @@ export default function BillingPage() {
                     </div>
                   )}
 
-                  {/* Tier name */}
                   <p
                     style={{
                       margin: "0 0 6px",
@@ -407,7 +367,6 @@ export default function BillingPage() {
                     {plan.tier}
                   </p>
 
-                  {/* Price */}
                   <div
                     style={{ display: "flex", alignItems: "baseline", gap: 4 }}
                   >
@@ -448,45 +407,27 @@ export default function BillingPage() {
                     {plan.usage}
                   </p>
 
-                  {/* CTA button */}
                   {!hasActiveSubscription && (
-                    <Form method="post" style={{ marginBottom: 20 }}>
-                      <input type="hidden" name="intent" value="subscribe" />
-                      <input type="hidden" name="plan" value={plan.id} />
-                      <button
-                        type="submit"
-                        style={{
-                          width: "100%",
-                          padding: "13px 0",
-                          borderRadius: 10,
-                          border: "none",
-                          background: isPopular ? "#3b82f6" : "#0f172a",
-                          color: "#fff",
-                          fontWeight: 700,
-                          fontSize: 15,
-                          cursor: "pointer",
-                        }}
-                      >
-                        {plan.cta}
-                      </button>
-                    </Form>
-                  )}
-
-                  {isActive && (
-                    <p
+                    <button
+                      type="button"
+                      onClick={goToShopifyPricing}
                       style={{
-                        textAlign: "center",
-                        color: "#15803d",
+                        width: "100%",
+                        padding: "13px 0",
+                        borderRadius: 10,
+                        border: "none",
+                        background: isPopular ? "#3b82f6" : "#0f172a",
+                        color: "#fff",
                         fontWeight: 700,
-                        fontSize: 14,
+                        fontSize: 15,
+                        cursor: "pointer",
                         marginBottom: 20,
                       }}
                     >
-                      ✓ Current plan
-                    </p>
+                      {plan.cta}
+                    </button>
                   )}
 
-                  {/* Divider */}
                   <hr
                     style={{
                       border: "none",
@@ -497,14 +438,13 @@ export default function BillingPage() {
                     }}
                   />
 
-                  {/* Cost per use */}
                   <p
                     style={{
                       margin: "0 0 10px",
                       fontSize: 11,
                       fontWeight: 700,
                       letterSpacing: "0.08em",
-                      color: isPopular ? "#94a3b8" : "#94a3b8",
+                      color: "#94a3b8",
                       textTransform: "uppercase",
                     }}
                   >
@@ -554,7 +494,6 @@ export default function BillingPage() {
                     ))}
                   </div>
 
-                  {/* Features */}
                   {plan.parentFeatures && (
                     <p
                       style={{
@@ -575,8 +514,7 @@ export default function BillingPage() {
                           fontSize: 13,
                           color: featureColor,
                           lineHeight: 1.9,
-                          fontWeight:
-                            plan.boldFeature === f ? 700 : 400,
+                          fontWeight: plan.boldFeature === f ? 700 : 400,
                         }}
                       >
                         {f}

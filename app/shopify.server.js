@@ -2,14 +2,23 @@ import "@shopify/shopify-app-react-router/adapters/node";
 import {
   ApiVersion,
   AppDistribution,
-  BillingInterval,
   shopifyApp,
 } from "@shopify/shopify-app-react-router/server";
 import { PrismaSessionStorage } from "@shopify/shopify-app-session-storage-prisma";
 import prisma from "./db.server";
-import { PLANS } from "./lib/plans";
 
-export { PLANS };
+// Nanokart uses Shopify Managed Pricing — plans are defined in the Partner
+// Dashboard, not here. We redirect users to the Shopify-hosted pricing page
+// (https://admin.shopify.com/store/<shop>/charges/<APP_HANDLE>/pricing_plans)
+// instead of calling billing.request(), which is forbidden for Managed
+// Pricing apps.
+//
+// While the app is in review (unpublished), Shopify uses the client_id as the
+// handle in URLs. Once the app is approved and published, you can override
+// this via the SHOPIFY_APP_HANDLE env var on Render to use the public slug
+// (e.g. "nanokart").
+export const APP_HANDLE =
+  process.env.SHOPIFY_APP_HANDLE || process.env.SHOPIFY_API_KEY || "nanokart";
 
 const shopify = shopifyApp({
   apiKey: process.env.SHOPIFY_API_KEY,
@@ -22,68 +31,6 @@ const shopify = shopifyApp({
   distribution: AppDistribution.AppStore,
   future: {
     expiringOfflineAccessTokens: true,
-  },
-  billing: {
-    [PLANS.STARTER_MONTHLY]: {
-      lineItems: [
-        {
-          amount: 999,
-          currencyCode: "INR",
-          interval: BillingInterval.Every30Days,
-          trialDays: 14,
-        },
-      ],
-    },
-    [PLANS.GROWTH_MONTHLY]: {
-      lineItems: [
-        {
-          amount: 2999,
-          currencyCode: "INR",
-          interval: BillingInterval.Every30Days,
-          trialDays: 14,
-        },
-      ],
-    },
-    [PLANS.PRO_MONTHLY]: {
-      lineItems: [
-        {
-          amount: 7999,
-          currencyCode: "INR",
-          interval: BillingInterval.Every30Days,
-          trialDays: 14,
-        },
-      ],
-    },
-    [PLANS.STARTER_ANNUAL]: {
-      lineItems: [
-        {
-          amount: 9990,
-          currencyCode: "INR",
-          interval: BillingInterval.Annual,
-          trialDays: 14,
-        },
-      ],
-    },
-    [PLANS.GROWTH_ANNUAL]: {
-      lineItems: [
-        {
-          amount: 29990,
-          currencyCode: "INR",
-          interval: BillingInterval.Annual,
-          trialDays: 14,
-        },
-      ],
-    },
-    [PLANS.PRO_ANNUAL]: {
-      lineItems: [
-        {
-          amount: 79990,
-          currencyCode: "INR",
-          interval: BillingInterval.Annual,
-          trialDays: 14,
-        },
-      ],
-    },
   },
   ...(process.env.SHOP_CUSTOM_DOMAIN
     ? { customShopDomains: [process.env.SHOP_CUSTOM_DOMAIN] }

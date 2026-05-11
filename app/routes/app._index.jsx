@@ -3,17 +3,15 @@ import { Form, useActionData, useLoaderData, useNavigation } from "react-router"
 import { Link, redirect } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
-import { ALL_PLAN_KEYS } from "../lib/plans";
 import prisma from "../db.server";
 
 export const loader = async ({ request }) => {
   const { session, billing } = await authenticate.admin(request);
   const shop = session?.shop;
 
-  const { hasActivePayment } = await billing.check({
-    plans: ALL_PLAN_KEYS,
-    isTest: true,
-  });
+  // Managed Pricing: billing.check() with no plans returns true if the merchant
+  // has any active app subscription (regardless of plan name).
+  const { hasActivePayment } = await billing.check({});
 
   if (!hasActivePayment) {
     const url = new URL(request.url);
