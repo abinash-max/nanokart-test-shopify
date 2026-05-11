@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { redirect } from "react-router";
-import { useLoaderData } from "react-router";
+import { Form, redirect, useLoaderData } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
 import { PLANS, ALL_PLAN_KEYS as ALL_PLANS } from "../lib/plans";
@@ -30,7 +29,9 @@ export const action = async ({ request }) => {
 
   if (intent === "subscribe") {
     if (ALL_PLANS.includes(plan)) {
-      await billing.request({
+      // billing.request returns a redirect Response to Shopify's hosted
+      // confirmation page — we must return it so the browser follows it.
+      return await billing.request({
         plan,
         isTest: true,
         returnUrl: `${process.env.SHOPIFY_APP_URL}/app`,
@@ -260,7 +261,7 @@ export default function BillingPage() {
                   <strong>Current plan:</strong> {activePlan}
                 </span>
               </div>
-              <form method="post">
+              <Form method="post">
                 <input type="hidden" name="intent" value="cancel" />
                 <button
                   type="submit"
@@ -277,7 +278,7 @@ export default function BillingPage() {
                 >
                   Cancel subscription
                 </button>
-              </form>
+              </Form>
             </div>
           )}
 
@@ -449,7 +450,7 @@ export default function BillingPage() {
 
                   {/* CTA button */}
                   {!hasActiveSubscription && (
-                    <form method="post" style={{ marginBottom: 20 }}>
+                    <Form method="post" style={{ marginBottom: 20 }}>
                       <input type="hidden" name="intent" value="subscribe" />
                       <input type="hidden" name="plan" value={plan.id} />
                       <button
@@ -468,7 +469,7 @@ export default function BillingPage() {
                       >
                         {plan.cta}
                       </button>
-                    </form>
+                    </Form>
                   )}
 
                   {isActive && (
