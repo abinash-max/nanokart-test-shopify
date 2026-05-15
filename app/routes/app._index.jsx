@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
-import { Form, useActionData, useLoaderData, useNavigation } from "react-router";
-import { Link, redirect } from "react-router";
+import {
+  Form,
+  useActionData,
+  useLoaderData,
+  useNavigate,
+  useNavigation,
+} from "react-router";
+import { Link } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
 import prisma from "../db.server";
@@ -9,14 +15,8 @@ export const loader = async ({ request }) => {
   const { session, billing } = await authenticate.admin(request);
   const shop = session?.shop;
 
-  // Managed Pricing: billing.check() with no plans returns true if the merchant
-  // has any active app subscription (regardless of plan name).
+  // Expose subscription status; do not redirect here — welcome screen comes first.
   const { hasActivePayment } = await billing.check({});
-
-  if (!hasActivePayment) {
-    const url = new URL(request.url);
-    throw redirect(`/app/billing${url.search}`);
-  }
 
   const existingConfig = shop
     ? await prisma.merchantConfig.findFirst({
@@ -26,6 +26,7 @@ export const loader = async ({ request }) => {
     : null;
 
   return {
+    hasActivePayment,
     hasSavedConfig: Boolean(existingConfig),
   };
 };
@@ -66,9 +67,10 @@ export const action = async ({ request }) => {
 };
 
 export default function Index() {
-  const loaderData = useLoaderData();
+  const { hasActivePayment } = useLoaderData();
   const actionData = useActionData();
   const navigation = useNavigation();
+  const navigate = useNavigate();
   const isSaving = navigation.state !== "idle";
 
   const [apiKey, setApiKey] = useState(actionData?.values?.apiKey ?? "");
@@ -101,6 +103,11 @@ export default function Index() {
   }, [showSuccess]);
 
   const onGetStarted = () => {
+    if (!hasActivePayment) {
+      navigate("/app/billing");
+      return;
+    }
+
     try {
       localStorage.setItem("nanokart:onboarding", "config");
     } catch {

@@ -13,12 +13,9 @@ import prisma from "./db.server";
 // instead of calling billing.request(), which is forbidden for Managed
 // Pricing apps.
 //
-// While the app is in review (unpublished), Shopify uses the client_id as the
-// handle in URLs. Once the app is approved and published, you can override
-// this via the SHOPIFY_APP_HANDLE env var on Render to use the public slug
-// (e.g. "nanokart").
-export const APP_HANDLE =
-  process.env.SHOPIFY_APP_HANDLE || process.env.SHOPIFY_API_KEY || "nanokart";
+// App handle for Shopify App Pricing URLs (/charges/<handle>/pricing_plans).
+// Must match the listing slug (e.g. "nanokart"), NOT the API key / client_id.
+export const APP_HANDLE = process.env.SHOPIFY_APP_HANDLE || "nanokart";
 
 const shopify = shopifyApp({
   apiKey: process.env.SHOPIFY_API_KEY,

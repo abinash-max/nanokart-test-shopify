@@ -156,10 +156,9 @@ export default function BillingPage() {
   const plans = isAnnual ? PLAN_DATA.annual : PLAN_DATA.monthly;
 
   const goToShopifyPricing = () => {
-    // Break out of the embedded iframe and load Shopify's hosted pricing page
-    // at the top level. This is the correct flow for Managed Pricing apps.
-    if (typeof window !== "undefined") {
-      window.open(managedPricingUrl, "_top");
+    // Break out of the embedded iframe — handle must be "nanokart", not client_id.
+    if (typeof window !== "undefined" && window.top) {
+      window.top.location.href = managedPricingUrl;
     }
   };
 
