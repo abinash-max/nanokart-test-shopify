@@ -1,7 +1,17 @@
 import { useState } from "react";
-import { useLoaderData } from "react-router";
+import { Form, Link, useLoaderData } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate, APP_HANDLE } from "../shopify.server";
+
+function shopifyPricingPlansUrl(shop) {
+  const shopHandle = shop.replace(".myshopify.com", "");
+  return `https://admin.shopify.com/store/${shopHandle}/charges/${APP_HANDLE}/pricing_plans`;
+}
+
+export const action = async ({ request }) => {
+  const { session, redirect } = await authenticate.admin(request);
+  return redirect(shopifyPricingPlansUrl(session.shop), { target: "_top" });
+};
 
 export const loader = async ({ request }) => {
   const { billing, session } = await authenticate.admin(request);
@@ -11,8 +21,7 @@ export const loader = async ({ request }) => {
   const billingCheck = await billing.check({});
   const activeSub = billingCheck.appSubscriptions?.[0] ?? null;
 
-  const shopHandle = session.shop.replace(".myshopify.com", "");
-  const managedPricingUrl = `https://admin.shopify.com/store/${shopHandle}/charges/${APP_HANDLE}/pricing_plans`;
+  const managedPricingUrl = shopifyPricingPlansUrl(session.shop);
 
   return {
     shop: session.shop,
@@ -155,12 +164,18 @@ export default function BillingPage() {
 
   const plans = isAnnual ? PLAN_DATA.annual : PLAN_DATA.monthly;
 
-  const goToShopifyPricing = () => {
-    // Break out of the embedded iframe — handle must be "nanokart", not client_id.
-    if (typeof window !== "undefined" && window.top) {
-      window.top.location.href = managedPricingUrl;
-    }
-  };
+  const planCtaButtonStyle = (isPopular) => ({
+    width: "100%",
+    padding: "13px 0",
+    borderRadius: 10,
+    border: "none",
+    background: isPopular ? "#3b82f6" : "#0f172a",
+    color: "#fff",
+    fontWeight: 700,
+    fontSize: 15,
+    cursor: "pointer",
+    marginBottom: 20,
+  });
 
   const baseCard = {
     borderRadius: 16,
@@ -192,6 +207,14 @@ export default function BillingPage() {
         }}
       >
         <div style={{ maxWidth: 960, margin: "0 auto" }}>
+          <div style={{ marginBottom: 16 }}>
+            <Link
+              to="/app"
+              style={{ fontSize: 14, color: "#2563eb", fontWeight: 600 }}
+            >
+              ← Back to Home
+            </Link>
+          </div>
           {/* Active subscription banner */}
           {hasActiveSubscription && (
             <div
@@ -225,22 +248,23 @@ export default function BillingPage() {
                   <strong>Current plan:</strong> {activePlan}
                 </span>
               </div>
-              <button
-                type="button"
-                onClick={goToShopifyPricing}
-                style={{
-                  background: "transparent",
-                  color: "#0f172a",
-                  border: "1px solid #cbd5e1",
-                  borderRadius: 8,
-                  fontWeight: 600,
-                  padding: "6px 16px",
-                  cursor: "pointer",
-                  fontSize: 13,
-                }}
-              >
-                Manage subscription
-              </button>
+              <Form method="post" style={{ margin: 0 }}>
+                <button
+                  type="submit"
+                  style={{
+                    background: "transparent",
+                    color: "#0f172a",
+                    border: "1px solid #cbd5e1",
+                    borderRadius: 8,
+                    fontWeight: 600,
+                    padding: "6px 16px",
+                    cursor: "pointer",
+                    fontSize: 13,
+                  }}
+                >
+                  Manage subscription
+                </button>
+              </Form>
             </div>
           )}
 
@@ -407,24 +431,14 @@ export default function BillingPage() {
                   </p>
 
                   {!hasActiveSubscription && (
-                    <button
-                      type="button"
-                      onClick={goToShopifyPricing}
-                      style={{
-                        width: "100%",
-                        padding: "13px 0",
-                        borderRadius: 10,
-                        border: "none",
-                        background: isPopular ? "#3b82f6" : "#0f172a",
-                        color: "#fff",
-                        fontWeight: 700,
-                        fontSize: 15,
-                        cursor: "pointer",
-                        marginBottom: 20,
-                      }}
-                    >
-                      {plan.cta}
-                    </button>
+                    <Form method="post" style={{ margin: 0 }}>
+                      <button
+                        type="submit"
+                        style={planCtaButtonStyle(isPopular)}
+                      >
+                        {plan.cta}
+                      </button>
+                    </Form>
                   )}
 
                   <hr
